@@ -5,15 +5,32 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+try:
+    matplotlib.font_manager._rebuild()
+except AttributeError:
+    # _rebuild が見つからない古いバージョンの matplotlib の場合
+    # あるいは別の方法を試す (今回は何もしない)
+    pass
 import seaborn as sns
+
+# 利用可能なフォントを表示
+available_fonts = fm.findSystemFonts(fontpaths=None, fontext='ttf')
+print('Available fonts:', available_fonts)
+
+# フォントに関するエラーメッセージを抑制
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
 
 # グラフの日本語表示設定
 # 環境に合わせて適宜変更してください (Mac, Windows, Linuxの例)
-plt.rcParams['font.sans-serif'] = ['Hiragino Sans'] # Macの場合
+# plt.rcParams['font.sans-serif'] = ['Hiragino Sans']  # 利用可能なフォントを指定
 # plt.rcParams['font.sans-serif'] = ['MS Gothic'] # Windowsの場合
 # plt.rcParams['font.family'] = 'IPAexGothic' # LinuxなどでIPAフォントをインストールした場合
-plt.rcParams['axes.unicode_minus'] = False # マイナス記号の表示設定
+# plt.rcParams['axes.unicode_minus'] = False # マイナス記号の表示設定
 
+# matplotlibのデフォルト設定を使用
+plt.rcdefaults()
 
 # %%
 df_raw = pd.read_csv('../data/visitors.csv')
@@ -128,10 +145,36 @@ for year in sorted(df_cleaned['year'].unique()):
 # %%
 # 可視化対象とする国リスト (データ期間や年ごとのトップ10を参考に選定)
 # 必要に応じて表示したい国を変更してください
-target_countries = ['韓国', '中国', '台湾', 'タイ', 'アメリカ', '香港']
+target_countries_jp = ['韓国', '中国', '台湾', '米国', 'タイ', '香港', '豪州', 'ベトナム', 'マレーシア', 'フィリピン']
 
-# 選択した国のみのデータに絞り込み
-df_plot = df_cleaned[df_cleaned['country'].isin(target_countries)].copy()
+# 日本語の国名を英語にマッピングする辞書
+country_name_mapping = {
+    '韓国': 'South Korea',
+    '中国': 'China',
+    '台湾': 'Taiwan',
+    'タイ': 'Thailand',
+    'アメリカ': 'USA',
+    '香港': 'Hong Kong',
+    'インド': 'India',
+    'インドネシア': 'Indonesia',
+    'カナダ': 'Canada',
+    'シンガポール': 'Singapore',
+    'ドイツ': 'Germany',
+    'フィリピン': 'Philippines',
+    'フランス': 'France',
+    'ベトナム': 'Vietnam',
+    'マレーシア': 'Malaysia',
+    '米国': 'USA',
+    '英国': 'UK',
+    '豪州': 'Australia',
+    # 必要に応じて他の国名も追加してください
+}
+
+# 選択した国のみのデータに絞り込み (日本語名でフィルタリング)
+df_plot = df_cleaned[df_cleaned['country'].isin(target_countries_jp)].copy()
+
+# 国名列を英語に変換
+df_plot.loc[:, 'country'] = df_plot['country'].map(country_name_mapping)
 
 # 年ごとの国別訪問者数を集計し直し (グラフ用に整形)
 df_plot_yearly = df_plot.groupby(['year', 'country'])['visitors'].sum().reset_index()
@@ -140,16 +183,12 @@ df_plot_yearly = df_plot.groupby(['year', 'country'])['visitors'].sum().reset_in
 plt.figure(figsize=(12, 6))
 sns.lineplot(data=df_plot_yearly, x='year', y='visitors', hue='country', marker='o')
 
-plt.title('主要国 年間訪日観光客数推移')
-plt.xlabel('年')
-plt.ylabel('訪問者数')
+plt.title('Annual Visitor Trends by Country')
+plt.xlabel('Year')
+plt.ylabel('Number of Visitors')
 plt.grid(True)
 plt.xticks(df_plot_yearly['year'].unique()) # 各年のラベルを表示
-plt.legend(title='国')
+plt.legend(title='Country')
 plt.tight_layout()
 plt.show()
-
-# %%
-import matplotlib as mpl
-print(mpl.get_cachedir())
 # %%
