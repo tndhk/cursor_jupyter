@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 try:
-    matplotlib.font_manager._rebuild()
+    fm._rebuild()
 except AttributeError:
     # _rebuild が見つからない古いバージョンの matplotlib の場合
     # あるいは別の方法を試す (今回は何もしない)
